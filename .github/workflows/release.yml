@@ -1,0 +1,27 @@
+name: release
+
+on:
+  release:
+    types:
+      - "published"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Update Version
+        run: |
+          filepath="src/pyhellofresh/__init__.py"
+          new_version_string="__version__ = \"${{ github.event.release.tag_name }}\""
+          sed -i "s/^__version__ = .*$/$new_version_string/" "$filepath"
+      - uses: extractions/setup-just@v4
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - name: Build package
+        run: pip install build && python -m build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
