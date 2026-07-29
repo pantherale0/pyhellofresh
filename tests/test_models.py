@@ -11,6 +11,7 @@ from pyhellofresh.models import (
     TokenResponse,
     WeeklyMenu,
 )
+
 from .conftest import (
     SAMPLE_BALANCE_RESPONSE,
     SAMPLE_CART_PRICE_RESPONSE,

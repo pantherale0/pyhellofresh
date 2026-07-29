@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 import aiohttp
@@ -434,7 +432,7 @@ async def test_connection_error():
 
 @pytest.mark.anyio
 async def test_timeout_error():
-    session = create_mock_session(side_effect=asyncio.TimeoutError("Timeout"))
+    session = create_mock_session(side_effect=TimeoutError("Timeout"))
     client = HelloFreshClient(session=session, access_token="token")
     with pytest.raises(HelloFreshConnectionError) as exc_info:
         await client.get_profile()

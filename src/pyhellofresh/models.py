@@ -6,20 +6,20 @@ from dataclasses import dataclass, field
 from typing import Any
 
 __all__ = [
-    "TokenResponse",
-    "Profile",
     "AccountBalance",
-    "PastDeliveryItem",
+    "CartPrice",
+    "CartProduct",
+    "Meal",
     "PastDeliveries",
+    "PastDeliveryItem",
+    "Profile",
+    "Recipe",
     "RecipeAllergen",
     "RecipeIngredient",
     "RecipeNutrition",
     "RecipeStep",
-    "Recipe",
-    "Meal",
+    "TokenResponse",
     "WeeklyMenu",
-    "CartProduct",
-    "CartPrice",
 ]
 
 

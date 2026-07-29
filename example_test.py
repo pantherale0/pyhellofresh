@@ -23,7 +23,6 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 from pyhellofresh import (
-    HelloFreshAuthenticationError,
     HelloFreshClient,
     HelloFreshError,
 )
@@ -54,7 +53,7 @@ async def run_tests(
             print(f"\n🔑 Initiating passwordless login for {email}...")
             try:
                 public_id = await client.start_passwordless_login(email)
-                print(f"✅ Magic link sent successfully!")
+                print("✅ Magic link sent successfully!")
                 print(f"   Public ID: {public_id}")
                 print("\n📩 Check your email for the magic link from HelloFresh.")
                 link_input = input(
@@ -62,9 +61,7 @@ async def run_tests(
                 ).strip()
 
                 if link_input:
-                    if link_input.startswith("http://") or link_input.startswith(
-                        "https://"
-                    ):
+                    if link_input.startswith(("http://", "https://")):
                         token_resp = await client.finish_passwordless_login_from_url(
                             url=link_input,
                             public_id=public_id,
@@ -75,7 +72,7 @@ async def run_tests(
                             email=email,
                             public_id=public_id,
                         )
-                    print(f"✅ Passwordless login completed!")
+                    print("✅ Passwordless login completed!")
                     print(f"   Access Token: {token_resp.access_token[:30]}...")
                     print(f"   Refresh Token: {token_resp.refresh_token}")
             except HelloFreshError as err:
@@ -85,7 +82,7 @@ async def run_tests(
             print("\n🔄 Refreshing access token...")
             try:
                 token_resp = await client.refresh_access_token()
-                print(f"✅ Token refresh successful!")
+                print("✅ Token refresh successful!")
                 print(f"   New Access Token: {token_resp.access_token[:30]}...")
                 print(f"   Refresh Token: {token_resp.refresh_token}")
             except HelloFreshError as err:
@@ -102,15 +99,16 @@ async def run_tests(
         print("\n👤 Testing get_profile()...")
         try:
             profile = await client.get_profile()
-            print(f"✅ Profile fetched:")
+            user_id = profile.dict().get("id") if hasattr(profile, "dict") else None
+            print("✅ Profile fetched:")
             print(
                 f"   - Household Size: {profile.total_people} (Adults: {profile.adults}, Children: {profile.children})"
             )
+            print(f"   - User ID: {user_id}")
             print(f"   - Dietary Preferences: {profile.dietary_preferences}")
             print(f"   - Exclusions: {profile.exclusions}")
             print(f"   - Meal Types: {profile.meal_types}")
 
-            user_id = profile.dict().get("id") if hasattr(profile, "dict") else None
         except HelloFreshError as err:
             print(f"❌ get_profile error: {err}")
 
@@ -118,17 +116,17 @@ async def run_tests(
         print("\n💳 Testing get_balance()...")
         try:
             balance = await client.get_balance()
-            print(f"✅ Credit balance fetched:")
+            print("✅ Credit balance fetched:")
             print(f"   - Amount: {balance.amount / 100:.2f} {balance.currency_code}")
             print(f"   - Bonus: {balance.bonus / 100:.2f} {balance.currency_code}")
         except HelloFreshError as err:
             print(f"⚠️ get_balance response: {err}")
 
         # --- STEP 4: PAST DELIVERIES ---
-        print(f"\n📦 Testing get_past_deliveries()...")
+        print("\n📦 Testing get_past_deliveries()...")
         try:
             past = await client.get_past_deliveries()
-            print(f"✅ Past deliveries fetched:")
+            print("✅ Past deliveries fetched:")
             print(f"   - Total weeks recorded: {len(past.weeks)}")
             if past.next_week:
                 print(f"   - Next upcoming week: {past.next_week}")
@@ -142,7 +140,7 @@ async def run_tests(
         sample_recipe_id = None
         try:
             menu = await client.get_menu(week=week)
-            print(f"✅ Weekly menu fetched:")
+            print("✅ Weekly menu fetched:")
             print(f"   - Week ID: {menu.week}")
             print(f"   - Meals Ready: {menu.meals_ready}")
             print(f"   - Available Meals: {len(menu.meals)}")
@@ -163,7 +161,7 @@ async def run_tests(
             print(f"\n📖 Testing get_recipe(recipe_id='{sample_recipe_id}')...")
             try:
                 recipe = await client.get_recipe(sample_recipe_id)
-                print(f"✅ Recipe details fetched:")
+                print("✅ Recipe details fetched:")
                 print(f"   - Name: {recipe.name}")
                 print(
                     f"   - Prep Time: {recipe.prep_time} | Total Time: {recipe.total_time}"
@@ -181,7 +179,7 @@ async def run_tests(
         print(f"\n🛒 Testing get_cart_price(week='{week}')...")
         try:
             cart = await client.get_cart_price(week=week, box_size=2)
-            print(f"✅ Cart pricing calculated:")
+            print("✅ Cart pricing calculated:")
             print(f"   - Subtotal: £{cart.sub_total:.2f}")
             print(f"   - Shipping: £{cart.shipping_amount:.2f}")
             print(f"   - Discount: £{cart.discount_amount:.2f}")
