@@ -298,6 +298,32 @@ async def test_get_menu_auto_subscription():
 
 
 @pytest.mark.anyio
+async def test_search_recipes():
+    session = create_mock_session(
+        status=200,
+        json_data={
+            "items": [SAMPLE_RECIPE_RESPONSE],
+            "total": 1,
+            "take": 20,
+            "skip": 0,
+        },
+    )
+    client = HelloFreshClient(session=session)
+    recipes = await client.search_recipes("veggie", take=5)
+    assert len(recipes) == 1
+    assert recipes[0].id == "6a2a93831f9f329b3991d936"
+    assert recipes[0].name == "Mexican Inspired Veggie Small Plates"
+
+
+@pytest.mark.anyio
+async def test_search_recipes_non_dict_response():
+    session = create_mock_session(status=200, json_data=[])
+    client = HelloFreshClient(session=session)
+    recipes = await client.search_recipes("veggie")
+    assert recipes == []
+
+
+@pytest.mark.anyio
 async def test_get_cart_price_auto_subscription():
     session = MagicMock()
     session.closed = False
@@ -309,8 +335,10 @@ async def test_get_cart_price_auto_subscription():
             headers={"Content-Type": "application/json"},
             json=AsyncMock(
                 return_value={
+                    "id": "15961823",
                     "activeSubscriptionId": 10323453,
                     "activeSubscriptionSkus": "GB-CBU-2-2-0",
+                    "customerPlanIds": ["cc5bbc8f-f56d-4d0b-929c-984a3e071cdd"],
                 }
             ),
         )
@@ -337,7 +365,9 @@ async def test_get_cart_price_auto_subscription():
 async def test_get_cart_price_explicit():
     session = create_mock_session(status=200, json_data=SAMPLE_CART_PRICE_RESPONSE)
     client = HelloFreshClient(session=session, access_token="token")
-    cart = await client.get_cart_price("2026-W32", box_size=2, subscription_id=10323453)
+    cart = await client.get_cart_price(
+        "2026-W32", box_size=2, subscription_id="10323453"
+    )
     assert cart.grand_total == 37.94
 
 

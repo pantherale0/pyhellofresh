@@ -310,10 +310,32 @@ class Meal:
             Recipe.from_dict(recipe_raw) if isinstance(recipe_raw, dict) else None
         )
 
+        charge_raw = data.get("charge")
+        charge_val = 0.0
+        if isinstance(charge_raw, (int, float)):
+            charge_val = float(charge_raw)
+        elif isinstance(charge_raw, str):
+            try:
+                charge_val = float(charge_raw)
+            except ValueError:
+                charge_val = 0.0
+        elif isinstance(charge_raw, dict):
+            raw_amt = (
+                charge_raw.get("totalAmount")
+                if charge_raw.get("totalAmount") is not None
+                else charge_raw.get("unitAmount", 0)
+            )
+            if isinstance(raw_amt, (int, float)):
+                charge_val = (
+                    float(raw_amt) / 100.0
+                    if isinstance(raw_amt, int) and raw_amt >= 10
+                    else float(raw_amt)
+                )
+
         return cls(
             recipe_family=data.get("recipeFamily"),
             index=data.get("index", 0),
-            charge=float(data.get("charge", 0.0)),
+            charge=charge_val,
             recipe=recipe_obj,
             related_category=data.get("relatedCategory"),
         )

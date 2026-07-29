@@ -87,6 +87,24 @@ def test_weekly_menu_model():
     assert menu.meals[0].recipe.name == "Mexican Inspired Veggie Small Plates"
 
 
+def test_meal_model_dict_charge():
+    from pyhellofresh.models import Meal
+
+    meal_data = {
+        "recipeFamily": "classic-plan",
+        "index": 100,
+        "charge": {
+            "label": "+£1/serving",
+            "unitAmount": 100,
+            "totalAmount": 200,
+            "reason": "premium",
+            "strategy": "per_meal",
+        },
+    }
+    meal = Meal.from_dict(meal_data)
+    assert meal.charge == 2.0
+
+
 def test_cart_price_model():
     cart = CartPrice.from_dict(SAMPLE_CART_PRICE_RESPONSE)
     assert cart.grand_total == 37.94

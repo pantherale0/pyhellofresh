@@ -87,6 +87,7 @@ async def run_tests(
                 token_resp = await client.refresh_access_token()
                 print(f"✅ Token refresh successful!")
                 print(f"   New Access Token: {token_resp.access_token[:30]}...")
+                print(f"   Refresh Token: {token_resp.refresh_token}")
             except HelloFreshError as err:
                 print(f"❌ Token refresh error: {err}")
 

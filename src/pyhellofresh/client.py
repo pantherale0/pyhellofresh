@@ -778,6 +778,38 @@ class HelloFreshClient:
         data = await self._request("GET", path, params=params, auth_required=True)
         return Recipe.from_dict(data)
 
+    async def search_recipes(
+        self,
+        query: str,
+        take: int = 20,
+        skip: int = 0,
+    ) -> list[Recipe]:
+        """Search HelloFresh recipe catalog by keyword query.
+
+        Args:
+            query: Keyword search string (e.g. "pasta", "chicken", "tacos").
+            take: Maximum number of recipes to return (default 20).
+            skip: Pagination offset index (default 0).
+
+        Returns:
+            List of Recipe models matching search query.
+
+        Raises:
+            HelloFreshConnectionError: On network issue or timeout.
+            HelloFreshResponseError: On unexpected API error.
+        """
+        path = "/gw/recipes/recipes"
+        params = {
+            "country": self._country,
+            "locale": self._locale,
+            "q": query,
+            "take": take,
+            "skip": skip,
+        }
+        data = await self._request("GET", path, params=params, auth_required=False)
+        items = data.get("items", []) if isinstance(data, dict) else []
+        return [Recipe.from_dict(item) for item in items if isinstance(item, dict)]
+
     async def get_cart_price(
         self,
         week: str,
@@ -802,15 +834,26 @@ class HelloFreshClient:
             HelloFreshAuthenticationError: If access_token is missing or expired.
             HelloFreshConnectionError: On network issue or timeout.
         """
-        if not subscription_id or not product_sku:
-            try:
-                info = await self.get_customer_info()
-                if not subscription_id:
-                    subscription_id = info.get("activeSubscriptionId")
-                if not product_sku:
-                    product_sku = info.get("activeSubscriptionSkus")
-            except HelloFreshError:
-                pass
+        customer_id_val: int | None = None
+        plan_id_val: str | None = None
+
+        try:
+            info = await self.get_customer_info()
+            if not subscription_id:
+                subscription_id = info.get("activeSubscriptionId")
+            if not product_sku:
+                product_sku = info.get("activeSubscriptionSkus")
+            if info.get("id"):
+                try:
+                    customer_id_val = int(info["id"])
+                except (ValueError, TypeError):
+                    pass
+            if info.get("customerPlanIds") and isinstance(
+                info["customerPlanIds"], list
+            ):
+                plan_id_val = info["customerPlanIds"][0]
+        except HelloFreshError:
+            pass
 
         if not products:
             sku_handle = product_sku or "GB-CBU-2-2-0"
@@ -826,11 +869,21 @@ class HelloFreshClient:
             "country": self._country,
             "locale": self._locale,
             "boxSize": box_size,
+            "isFirstOrder": False,
             "isRecurring": True,
             "products": products,
         }
-        if subscription_id:
-            payload["subscriptionID"] = subscription_id
+        if customer_id_val is not None:
+            payload["customerID"] = customer_id_val
+        if subscription_id is not None:
+            if isinstance(subscription_id, int):
+                payload["subscriptionID"] = subscription_id
+            elif str(subscription_id).isdigit():
+                payload["subscriptionID"] = int(subscription_id)
+            else:
+                payload["subscriptionID"] = subscription_id
+        if plan_id_val:
+            payload["planID"] = plan_id_val
 
         data = await self._request("POST", path, json_data=payload, auth_required=True)
         return CartPrice.from_dict(data)
