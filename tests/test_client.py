@@ -311,6 +311,12 @@ async def test_search_recipes():
     assert len(recipes) == 1
     assert recipes[0].id == "6a2a93831f9f329b3991d936"
     assert recipes[0].name == "Mexican Inspired Veggie Small Plates"
+    session.request.assert_called_once()
+    call_args = session.request.call_args
+    assert call_args.args[0] == "GET"
+    assert call_args.args[1] == f"{DEFAULT_BASE_URL}/gw/api/recipes/search"
+    assert call_args.kwargs["params"]["q"] == "veggie"
+    assert call_args.kwargs["params"]["take"] == 5
 
 
 @pytest.mark.anyio

@@ -798,7 +798,7 @@ class HelloFreshClient:
             HelloFreshConnectionError: On network issue or timeout.
             HelloFreshResponseError: On unexpected API error.
         """
-        path = "/gw/recipes/recipes"
+        path = "/gw/api/recipes/search"
         params = {
             "country": self._country,
             "locale": self._locale,
