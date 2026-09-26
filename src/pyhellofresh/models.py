@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+_MEDIA_IMAGE_BASE = "https://media.hellofresh.com/hellofresh_s3"
+
 __all__ = [
     "AccountBalance",
     "CartPrice",
@@ -21,6 +23,35 @@ __all__ = [
     "TokenResponse",
     "WeeklyMenu",
 ]
+
+
+def _media_image_url(link: str | None, path: str | None = None) -> str | None:
+    """Rewrite a HelloFresh image onto media.hellofresh.com.
+
+    The recipes API returns legacy CloudFront URLs
+    (``https://….cloudfront.net/{width},{height}/{path}``) plus a relative
+    ``imagePath`` or ``iconPath``. The website serves that same asset from
+    ``media.hellofresh.com`` under the ``hellofresh_s3`` prefix. The ``0,0``
+    size segment is a placeholder and is dropped.
+    """
+    source = path if isinstance(path, str) and path.strip() else link
+    if not isinstance(source, str) or not source.strip():
+        return link
+
+    asset = source.strip()
+    if asset.startswith(("http://", "https://")) and "cloudfront.net" not in asset:
+        return asset
+
+    if "cloudfront.net" in asset:
+        parts = asset.split("/")
+        if len(parts) <= 4:
+            return asset
+        asset = "/".join(parts[4:])
+
+    asset = asset.lstrip("/")
+    if not asset:
+        return link
+    return f"{_MEDIA_IMAGE_BASE}/{asset}"
 
 
 @dataclass
@@ -161,7 +192,7 @@ class RecipeAllergen:
             name=data.get("name", ""),
             type=data.get("type"),
             slug=data.get("slug"),
-            icon_link=data.get("iconLink"),
+            icon_link=_media_image_url(data.get("iconLink"), data.get("iconPath")),
         )
 
 
@@ -186,7 +217,7 @@ class RecipeIngredient:
             uuid=data.get("uuid"),
             type=data.get("type"),
             slug=data.get("slug"),
-            image_link=data.get("imageLink"),
+            image_link=_media_image_url(data.get("imageLink"), data.get("imagePath")),
             shipped=data.get("shipped", True),
         )
 
@@ -270,7 +301,7 @@ class Recipe:
             difficulty=data.get("difficulty", 1),
             prep_time=data.get("prepTime"),
             total_time=data.get("totalTime"),
-            image_link=data.get("imageLink"),
+            image_link=_media_image_url(data.get("imageLink"), data.get("imagePath")),
             website_url=data.get("websiteUrl"),
             allergens=[
                 RecipeAllergen.from_dict(a)

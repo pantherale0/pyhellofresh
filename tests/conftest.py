@@ -67,7 +67,9 @@ SAMPLE_RECIPE_RESPONSE = {
     "difficulty": 2,
     "prepTime": "PT40M",
     "totalTime": "PT35M",
-    "imageLink": "https://media.hellofresh.com/image.jpg",
+    "imageLink": (
+        "https://d3hvwccx09j84u.cloudfront.net/0,0/image/recipe-main.jpg"
+    ),
     "websiteUrl": "https://www.hellofresh.co.uk/recipes/mexican-inspired",
     "allergens": [
         {
@@ -75,7 +77,10 @@ SAMPLE_RECIPE_RESPONSE = {
             "name": "Milk",
             "type": "milk",
             "slug": "milk",
-            "iconLink": "https://media.hellofresh.com/milk.png",
+            "iconLink": (
+                "https://d3hvwccx09j84u.cloudfront.net/0,0/allergens/"
+                "57962a07b7e8697d4b3052fa-feb8e168.png"
+            ),
         }
     ],
     "ingredients": [
@@ -83,6 +88,9 @@ SAMPLE_RECIPE_RESPONSE = {
             "id": "ing_1",
             "name": "Sweetcorn",
             "uuid": "u_ing_1",
+            "imageLink": (
+                "https://d3hvwccx09j84u.cloudfront.net/0,0/ingredient/sweetcorn.png"
+            ),
             "shipped": True,
         }
     ],

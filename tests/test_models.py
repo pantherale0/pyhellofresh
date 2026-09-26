@@ -76,6 +76,59 @@ def test_recipe_model():
     assert recipe.steps[0].utensils == ["Baking Tray"]
     assert len(recipe.nutrition) == 1
     assert recipe.nutrition[0].name == "Energy (kJ)"
+    assert (
+        recipe.image_link
+        == "https://media.hellofresh.com/hellofresh_s3/image/recipe-main.jpg"
+    )
+    assert recipe.website_url == "https://www.hellofresh.co.uk/recipes/mexican-inspired"
+    assert recipe.allergens[0].icon_link == (
+        "https://media.hellofresh.com/hellofresh_s3/allergens/"
+        "57962a07b7e8697d4b3052fa-feb8e168.png"
+    )
+    assert recipe.ingredients[0].image_link == (
+        "https://media.hellofresh.com/hellofresh_s3/ingredient/sweetcorn.png"
+    )
+
+
+def test_recipe_image_path_preferred_over_cloudfront_link():
+    recipe = Recipe.from_dict(
+        {
+            "id": "recipe-1",
+            "name": "Pasta",
+            "imageLink": (
+                "https://d3hvwccx09j84u.cloudfront.net/0,0/image/ignored.jpg"
+            ),
+            "imagePath": "/image/from-path.jpg",
+            "allergens": [
+                {
+                    "id": "a1",
+                    "name": "Fish",
+                    "iconLink": (
+                        "https://d3hvwccx09j84u.cloudfront.net/0,0/allergens/ignored.png"
+                    ),
+                    "iconPath": "/allergens/from-path.png",
+                }
+            ],
+            "ingredients": [
+                {
+                    "id": "i1",
+                    "name": "Basil",
+                    "imageLink": "https://media.hellofresh.com/already-rewritten.png",
+                }
+            ],
+        }
+    )
+    assert (
+        recipe.image_link
+        == "https://media.hellofresh.com/hellofresh_s3/image/from-path.jpg"
+    )
+    assert recipe.allergens[0].icon_link == (
+        "https://media.hellofresh.com/hellofresh_s3/allergens/from-path.png"
+    )
+    assert (
+        recipe.ingredients[0].image_link
+        == "https://media.hellofresh.com/already-rewritten.png"
+    )
 
 
 def test_weekly_menu_model():
