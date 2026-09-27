@@ -36,9 +36,15 @@ dev = [
     "isort>=5.13.0",
     "mypy>=1.8.0",
 ]
+docs = [
+    "mkdocs-material>=9.6",
+    "mkdocstrings[python]>=0.29",
+    "ruff>=0.9",
+]
 
 [project.urls]
 Source = "https://github.com/pantherale0/pyhellofresh"
+Documentation = "https://pantherale0.github.io/pyhellofresh/"
 
 [tool.setuptools.package-data]
 pyhellofresh = ["py.typed"]

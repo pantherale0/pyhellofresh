@@ -2,6 +2,8 @@
 
 Async Python client library for accessing HelloFresh APIs. Designed to be completely standalone, fully typed, and ready for integration into Python applications or Home Assistant integrations.
 
+Guides and the API reference are published at <https://pantherale0.github.io/pyhellofresh/>.
+
 ## Features
 
 - **100% Asynchronous**: Built on top of `aiohttp` for non-blocking HTTP requests.
