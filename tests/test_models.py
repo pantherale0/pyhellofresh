@@ -157,6 +157,41 @@ def test_meal_model_dict_charge():
     }
     meal = Meal.from_dict(meal_data)
     assert meal.charge == 2.0
+    assert meal.quantity == 0
+    assert meal.selected is False
+
+
+def test_meal_model_selection_quantity():
+    from pyhellofresh.models import Meal
+
+    chosen = Meal.from_dict({"index": 1, "selection": {"quantity": 2, "limit": 5}})
+    assert chosen.quantity == 2
+    assert chosen.selected is True
+
+    skipped = Meal.from_dict(
+        {"index": 2, "selection": {"quantity": 1, "skipped": True}}
+    )
+    assert skipped.quantity == 0
+    assert skipped.selected is False
+
+
+def test_past_deliveries_items_shape():
+    deliveries = PastDeliveries.from_dict(
+        {
+            "items": [
+                {
+                    "id": "2026-W40",
+                    "cutoffDate": "2026-09-25T23:59:59+0100",
+                    "deliveryDate": "2026-09-30T00:00:00+0100",
+                    "status": "RUNNING",
+                }
+            ]
+        }
+    )
+    assert len(deliveries.weeks) == 1
+    assert deliveries.weeks[0].week == "2026-W40"
+    assert deliveries.weeks[0].cutoff_date == "2026-09-25T23:59:59+0100"
+    assert deliveries.weeks[0].status == "RUNNING"
 
 
 def test_cart_price_model():

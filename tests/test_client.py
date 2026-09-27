@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, MagicMock
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import aiohttp
 import pytest
@@ -59,6 +60,27 @@ def create_mock_session(
 
     mock_session.get = mock_session.request
     return mock_session
+
+
+def sequenced_session(payloads: list[dict]) -> MagicMock:
+    """Session whose successive requests return each payload in order."""
+    session = MagicMock(spec=aiohttp.ClientSession)
+    session.closed = False
+    session.close = AsyncMock()
+    contexts = []
+    for payload in payloads:
+        resp = MagicMock()
+        resp.status = 200
+        resp.headers = {"Content-Type": "application/json"}
+        resp.json = AsyncMock(return_value=payload)
+        resp.text = AsyncMock(return_value=json.dumps(payload))
+        ctx = MagicMock()
+        ctx.__aenter__ = AsyncMock(return_value=resp)
+        ctx.__aexit__ = AsyncMock(return_value=None)
+        contexts.append(ctx)
+    session.request.side_effect = contexts
+    session.get = session.request
+    return session
 
 
 @pytest.mark.anyio
@@ -247,6 +269,86 @@ async def test_get_menu():
     menu = await client.get_menu("2026-W32", subscription_id=10323453)
     assert menu.week == "2026-W32"
     assert len(menu.meals) == 1
+
+
+_OFFSET_DELIVERIES = {
+    "weeks": [
+        {
+            "week": "2026-W39",
+            "cutoffDate": "2026-09-18T23:59:59+00:00",
+            "status": "DELIVERED",
+        },
+        {
+            "week": "2026-W40",
+            "cutoffDate": "2026-09-25T23:59:59+00:00",
+            "status": "RUNNING",
+        },
+        {
+            "week": "2026-W41",
+            "cutoffDate": "2026-10-02T23:59:59+00:00",
+            "status": "RUNNING",
+        },
+    ]
+}
+
+_OFFSET_CUSTOMER = {
+    "activeSubscriptionId": 10323453,
+    "activeSubscriptionSkus": "GB-CBU-2-2-0",
+}
+
+
+def _offset_menu(week: str) -> dict:
+    return {
+        "id": "menu",
+        "week": week,
+        "meals": [
+            {
+                "index": 1,
+                "selection": {"quantity": 1},
+                "recipe": {"id": "chosen", "name": "In the box"},
+            },
+            {
+                "index": 2,
+                "selection": {"quantity": 0},
+                "recipe": {"id": "available", "name": "Not selected"},
+            },
+        ],
+    }
+
+
+@pytest.mark.anyio
+async def test_get_meals_for_week_offset_returns_selected_meals():
+    session = sequenced_session(
+        [_OFFSET_DELIVERIES, _OFFSET_CUSTOMER, _offset_menu("2026-W40")]
+    )
+    client = HelloFreshClient(session=session, access_token="token")
+    fixed_now = datetime(2026, 9, 27, tzinfo=timezone.utc)
+    with patch("pyhellofresh.client._utcnow", return_value=fixed_now):
+        meals = await client.get_meals_for_week_offset(0)
+
+    assert [meal.recipe.name for meal in meals if meal.recipe] == ["In the box"]
+    menu_call = session.request.call_args_list[2]
+    assert menu_call.kwargs["params"]["week"] == "2026-W40"
+
+
+@pytest.mark.anyio
+async def test_get_meals_for_week_offset_moves_forward_and_back():
+    session = sequenced_session(
+        [_OFFSET_DELIVERIES, _OFFSET_CUSTOMER, _offset_menu("2026-W41")]
+    )
+    client = HelloFreshClient(session=session, access_token="token")
+    fixed_now = datetime(2026, 9, 27, tzinfo=timezone.utc)
+    with patch("pyhellofresh.client._utcnow", return_value=fixed_now):
+        await client.get_meals_for_week_offset(1)
+    assert session.request.call_args_list[2].kwargs["params"]["week"] == "2026-W41"
+
+    session = sequenced_session(
+        [_OFFSET_DELIVERIES, _OFFSET_CUSTOMER, _offset_menu("2026-W39")]
+    )
+    client = HelloFreshClient(session=session, access_token="token")
+    with patch("pyhellofresh.client._utcnow", return_value=fixed_now):
+        await client.get_meals_for_week_offset(-1)
+    assert session.request.call_args_list[2].kwargs["params"]["week"] == "2026-W39"
 
 
 @pytest.mark.anyio

@@ -6,6 +6,7 @@ import json
 import re
 import types
 import uuid
+from datetime import datetime, timezone
 from typing import Any, Self
 from urllib.parse import parse_qs, urlparse
 
@@ -28,14 +29,21 @@ from .errors import (
 from .models import (
     AccountBalance,
     CartPrice,
+    Meal,
     PastDeliveries,
     Profile,
     Recipe,
     TokenResponse,
     WeeklyMenu,
 )
+from .weeks import current_iso_week, select_latest_delivery_week, shift_iso_week
 
 __all__ = ["HelloFreshClient"]
+
+
+def _utcnow() -> datetime:
+    """Return the current time in UTC."""
+    return datetime.now(timezone.utc)
 
 
 class HelloFreshClient:
@@ -756,6 +764,37 @@ class HelloFreshClient:
 
         data = await self._request("GET", path, params=params, auth_required=True)
         return WeeklyMenu.from_dict(data)
+
+    async def get_meals_for_week_offset(self, offset: int = 0) -> list[Meal]:
+        """Return the meals selected for a delivery week.
+
+        Offset ``0`` is the latest locked delivery: the newest scheduled week
+        whose cutoff has already passed. That is the box arriving now, rather
+        than the following week that is still open for selection. Positive
+        offsets move forward one ISO week at a time, and negative offsets move
+        backward.
+
+        Args:
+            offset: Weeks after the latest locked delivery. ``1`` is the
+                following week's selection.
+
+        Returns:
+            Meals whose menu selection quantity is greater than zero.
+
+        Raises:
+            HelloFreshError: If the delivery schedule has no usable week.
+            HelloFreshAuthenticationError: If access_token is missing or expired.
+            HelloFreshConnectionError: On network issue or timeout.
+        """
+        now = _utcnow()
+        anchor_week = current_iso_week(now)
+        deliveries = await self.get_past_deliveries(
+            shift_iso_week(anchor_week, -8),
+            shift_iso_week(anchor_week, 6),
+        )
+        latest_week = select_latest_delivery_week(deliveries.weeks, now)
+        menu = await self.get_menu(shift_iso_week(latest_week, offset))
+        return [meal for meal in menu.meals if meal.selected]
 
     async def get_recipe(self, recipe_id: str) -> Recipe:
         """Fetch details for a specific recipe.

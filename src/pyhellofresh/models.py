@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -135,23 +136,49 @@ class AccountBalance:
         )
 
 
+_ISO_WEEK = re.compile(r"^\d{4}-W\d{2}$")
+
+
+def _delivery_week_id(data: dict[str, Any]) -> str:
+    """Read an ISO week id from a delivery payload."""
+    week = data.get("week") or data.get("hfWeek")
+    if isinstance(week, str) and week:
+        return week
+    raw_id = data.get("id")
+    if isinstance(raw_id, str) and _ISO_WEEK.fullmatch(raw_id):
+        return raw_id
+    return ""
+
+
 @dataclass
 class PastDeliveryItem:
-    """Past delivery week entry."""
+    """One week from the customer delivery schedule."""
 
     week: str
     menu_id: str | None = None
     meals: list[dict[str, Any]] = field(default_factory=list)
     addons: list[dict[str, Any]] = field(default_factory=list)
+    cutoff_date: str | None = None
+    delivery_date: str | None = None
+    status: str | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> PastDeliveryItem:
         """Parse PastDeliveryItem from raw API dictionary."""
+        status = data.get("status")
+        if not isinstance(status, str) or not status:
+            state = data.get("state")
+            status = state if isinstance(state, str) else None
+        cutoff = data.get("cutoffDate") or data.get("cutoffDateTime")
+        delivery = data.get("deliveryDate") or data.get("deliveryDateTime")
         return cls(
-            week=data.get("week", ""),
+            week=_delivery_week_id(data),
             menu_id=data.get("menuId"),
             meals=data.get("meals", []) or [],
             addons=data.get("addons", []) or [],
+            cutoff_date=cutoff if isinstance(cutoff, str) else None,
+            delivery_date=delivery if isinstance(delivery, str) else None,
+            status=status,
         )
 
 
@@ -165,7 +192,7 @@ class PastDeliveries:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> PastDeliveries:
         """Parse PastDeliveries from raw API dictionary."""
-        raw_weeks = data.get("weeks", []) or []
+        raw_weeks = data.get("weeks") or data.get("items") or []
         return cls(
             weeks=[
                 PastDeliveryItem.from_dict(w) for w in raw_weeks if isinstance(w, dict)
@@ -330,8 +357,14 @@ class Meal:
     recipe_family: str | None = None
     index: int = 0
     charge: float = 0.0
+    quantity: int = 0
     recipe: Recipe | None = None
     related_category: str | None = None
+
+    @property
+    def selected(self) -> bool:
+        """Whether this meal is in the box for its week."""
+        return self.quantity > 0
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Meal:
@@ -367,9 +400,40 @@ class Meal:
             recipe_family=data.get("recipeFamily"),
             index=data.get("index", 0),
             charge=charge_val,
+            quantity=_selection_quantity(data.get("selection")),
             recipe=recipe_obj,
             related_category=data.get("relatedCategory"),
         )
+
+
+def _selection_quantity(selection: Any) -> int:
+    """Read how many times a menu course was chosen."""
+    if isinstance(selection, bool) or selection is None:
+        return 0
+    if isinstance(selection, int):
+        return selection
+    if isinstance(selection, float):
+        return int(selection)
+    if isinstance(selection, str):
+        try:
+            return int(selection)
+        except ValueError:
+            return 0
+    if not isinstance(selection, dict) or selection.get("skipped"):
+        return 0
+    raw_qty = selection.get("quantity")
+    if isinstance(raw_qty, bool) or raw_qty is None:
+        return 0
+    if isinstance(raw_qty, int):
+        return raw_qty
+    if isinstance(raw_qty, float):
+        return int(raw_qty)
+    if isinstance(raw_qty, str):
+        try:
+            return int(raw_qty)
+        except ValueError:
+            return 0
+    return 0
 
 
 @dataclass
