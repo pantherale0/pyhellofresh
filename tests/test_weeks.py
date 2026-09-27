@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -10,7 +10,7 @@ from pyhellofresh.errors import HelloFreshError
 from pyhellofresh.models import PastDeliveryItem
 from pyhellofresh.weeks import select_latest_delivery_week, shift_iso_week
 
-NOW = datetime(2026, 9, 27, 12, tzinfo=timezone.utc)
+NOW = datetime(2026, 9, 27, 12, tzinfo=UTC)
 
 
 def _week(

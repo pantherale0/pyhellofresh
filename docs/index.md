@@ -10,6 +10,7 @@ pip install pyhellofresh
 import asyncio
 from pyhellofresh import HelloFreshClient
 
+
 async def main():
     async with await HelloFreshClient.with_session(
         access_token="YOUR_ACCESS_TOKEN",
@@ -23,6 +24,7 @@ async def main():
         for meal in meals:
             if meal.recipe:
                 print(meal.quantity, meal.recipe.name)
+
 
 asyncio.run(main())
 ```

@@ -47,7 +47,6 @@ async def run_tests(
         country=country,
         locale=locale,
     ) as client:
-
         # --- STEP 1: AUTHENTICATION FLOW (IF EMAIL OR REFRESH TOKEN PROVIDED) ---
         if email and not client.access_token and not refresh_token:
             print(f"\n🔑 Initiating passwordless login for {email}...")

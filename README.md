@@ -30,20 +30,24 @@ pip install pyhellofresh
 import asyncio
 from pyhellofresh import HelloFreshClient
 
+
 async def main():
     # Initialize client with existing Bearer token
-    client = HelloFreshClient(access_token="YOUR_ACCESS_TOKEN", country="GB", locale="en-GB")
-    
+    client = HelloFreshClient(
+        access_token="YOUR_ACCESS_TOKEN", country="GB", locale="en-GB"
+    )
+
     # Fetch profile
     profile = await client.get_profile()
     print(f"Adults: {profile.adults}, Exclusions: {profile.exclusions}")
-    
+
     # Fetch weekly menu for 2026-W32
     menu = await client.get_menu(week="2026-W32")
     print(f"Week: {menu.week}, Total meals available: {len(menu.meals)}")
-    
+
     # Close session
     await client.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -55,12 +59,13 @@ if __name__ == "__main__":
 import asyncio
 from pyhellofresh import HelloFreshClient
 
+
 async def login():
     async with await HelloFreshClient.with_session() as client:
         # Step 1: Trigger magic link email
         public_id = await client.start_passwordless_login("user@example.com")
         print(f"Magic link sent. Public ID: {public_id}")
-        
+
         # Step 2: Extract code from link clicked in email and complete login
         token_resp = await client.finish_passwordless_login(
             code="CODE_FROM_EMAIL_LINK",

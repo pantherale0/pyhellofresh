@@ -30,7 +30,9 @@ The first request opens a `ClientSession`. `close()` closes it.
 `HelloFreshClient.with_session()` opens a session immediately and marks the client as its owner:
 
 ```python
-async with await HelloFreshClient.with_session(access_token="YOUR_ACCESS_TOKEN") as client:
+async with await HelloFreshClient.with_session(
+    access_token="YOUR_ACCESS_TOKEN"
+) as client:
     profile = await client.get_profile()
 ```
 

@@ -6,7 +6,7 @@ import json
 import re
 import types
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Self
 from urllib.parse import parse_qs, urlparse
 
@@ -43,7 +43,7 @@ __all__ = ["HelloFreshClient"]
 
 def _utcnow() -> datetime:
     """Return the current time in UTC."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class HelloFreshClient:

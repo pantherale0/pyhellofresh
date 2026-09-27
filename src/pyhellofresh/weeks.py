@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from .errors import HelloFreshError
 from .models import PastDeliveryItem
@@ -56,7 +56,7 @@ def select_latest_delivery_week(
         HelloFreshError: If the schedule has no usable delivery week.
     """
     if now.tzinfo is None:
-        now = now.replace(tzinfo=timezone.utc)
+        now = now.replace(tzinfo=UTC)
 
     candidates = [item for item in weeks if _is_iso_week(item.week)]
     if not candidates:
@@ -131,5 +131,5 @@ def _parse_api_datetime(value: str | None) -> datetime | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
+        return parsed.replace(tzinfo=UTC)
     return parsed

@@ -67,9 +67,7 @@ SAMPLE_RECIPE_RESPONSE = {
     "difficulty": 2,
     "prepTime": "PT40M",
     "totalTime": "PT35M",
-    "imageLink": (
-        "https://d3hvwccx09j84u.cloudfront.net/0,0/image/recipe-main.jpg"
-    ),
+    "imageLink": ("https://d3hvwccx09j84u.cloudfront.net/0,0/image/recipe-main.jpg"),
     "websiteUrl": "https://www.hellofresh.co.uk/recipes/mexican-inspired",
     "allergens": [
         {

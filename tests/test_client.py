@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import aiohttp
@@ -322,7 +322,7 @@ async def test_get_meals_for_week_offset_returns_selected_meals():
         [_OFFSET_DELIVERIES, _OFFSET_CUSTOMER, _offset_menu("2026-W40")]
     )
     client = HelloFreshClient(session=session, access_token="token")
-    fixed_now = datetime(2026, 9, 27, tzinfo=timezone.utc)
+    fixed_now = datetime(2026, 9, 27, tzinfo=UTC)
     with patch("pyhellofresh.client._utcnow", return_value=fixed_now):
         meals = await client.get_meals_for_week_offset(0)
 
@@ -337,7 +337,7 @@ async def test_get_meals_for_week_offset_moves_forward_and_back():
         [_OFFSET_DELIVERIES, _OFFSET_CUSTOMER, _offset_menu("2026-W41")]
     )
     client = HelloFreshClient(session=session, access_token="token")
-    fixed_now = datetime(2026, 9, 27, tzinfo=timezone.utc)
+    fixed_now = datetime(2026, 9, 27, tzinfo=UTC)
     with patch("pyhellofresh.client._utcnow", return_value=fixed_now):
         await client.get_meals_for_week_offset(1)
     assert session.request.call_args_list[2].kwargs["params"]["week"] == "2026-W41"
